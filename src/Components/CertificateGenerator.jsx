@@ -5,10 +5,11 @@ import Dropzone from 'react-dropzone';
 import Draggable from 'react-draggable';
 
 const CertificateGenerator = () => {
-  const [name, setName] = useState('John Doe');
+  const [name, setName] = useState('John Doe'); // Default name
   const [template, setTemplate] = useState(null);
-  const [fontSize, setFontSize] = useState(20);
-  const [yPosition, setYPosition] = useState(0);
+  const [fontSize, setFontSize] = useState(40); // Default font size
+  const [yPosition, setYPosition] = useState(0); // Y-axis position for the draggable text
+  const [textColor, setTextColor] = useState('#000000'); // Default text color (black)
 
   const onDrop = (acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -27,13 +28,13 @@ const CertificateGenerator = () => {
     html2canvas(input).then((canvas) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('landscape');
-      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210); // A4 size in mm
       pdf.save(`${name}-certificate.pdf`);
     });
   };
 
   const handleDrag = (e, data) => {
-    setYPosition(data.y);
+    setYPosition(data.y); // Capture the Y-axis movement
   };
 
   return (
@@ -71,6 +72,16 @@ const CertificateGenerator = () => {
           />
         </label>
 
+        <label className="flex items-center justify-between text-lg mb-6">
+          Text Color:
+          <input
+            type="color"
+            value={textColor}
+            onChange={(e) => setTextColor(e.target.value)}
+            className="ml-4 p-2 w-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </label>
+
         <button
           onClick={generateCertificate}
           className="w-full bg-blue-500 text-white p-3 rounded-lg text-xl hover:bg-blue-600 transition duration-200"
@@ -98,7 +109,7 @@ const CertificateGenerator = () => {
               >
                 <div
                   className="absolute w-full text-center cursor-move"
-                  style={{ fontSize: `${fontSize}px`, color: 'black' }}
+                  style={{ fontSize: `${fontSize}px`, color: textColor }}
                 >
                   {name}
                 </div>
