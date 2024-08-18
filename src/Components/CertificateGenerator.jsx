@@ -1,36 +1,59 @@
-import React, { useState } from 'react';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
-import Dropzone from 'react-dropzone';
-import Draggable from 'react-draggable';
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import React, { useState } from "react";
+import Draggable from "react-draggable";
+import Dropzone from "react-dropzone";
 
 const CertificateGenerator = () => {
-  const [name, setName] = useState('John Doe'); // Default name
+  const [name, setName] = useState("John Doe"); // Default name
   const [template, setTemplate] = useState(null);
   const [fontSize, setFontSize] = useState(40); // Default font size
   const [yPosition, setYPosition] = useState(0); // Y-axis position for the draggable text
-  const [textColor, setTextColor] = useState('#000000'); // Default text color (black)
+  const [textColor, setTextColor] = useState("#000000"); // Default text color (black)
+  const [preview, setPreview] = useState(false);
 
   const onDrop = (acceptedFiles) => {
     const file = acceptedFiles[0];
     const reader = new FileReader();
-    
+
     reader.onload = () => {
       setTemplate(reader.result);
     };
-    
+
     reader.readAsDataURL(file);
   };
 
-  const generateCertificate = () => {
-    const input = document.getElementById('certificate-template');
+  const previewCertificate = async () => {
+    const input = document.getElementById("certificate-template");
+    const genCerts = document.getElementById("generatedCerts");
+    genCerts.innerHTML = "";
 
-    html2canvas(input).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('landscape');
-      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210); // A4 size in mm
-      pdf.save(`${name}-certificate.pdf`);
+    const names = [
+      "Nabh Patodi",
+      "Tanmay Bansal",
+      "Atharva Kekare",
+      "Sukh Singh Oberoi",
+    ];
+    names.forEach((nameArr) => {
+      let cert = input.cloneNode(true);
+      cert.querySelector("#name").innerHTML = nameArr;
+      console.log(cert.querySelector("#name").innerHTML);
+      genCerts.innerHTML += cert.outerHTML;
     });
+    setPreview(true);
+  };
+
+  const generateCertificate = () => {
+    const certs = document.getElementById("generatedCerts").children;
+    for (let cert of certs) {
+      const name = cert.querySelector("#name").innerHTML;
+      html2canvas(cert).then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("landscape");
+        pdf.addImage(imgData, "PNG", 0, 0, 297, 210); // A4 size in mm
+        pdf.save(`${name}-certificate.pdf`);
+      });
+    }
   };
 
   const handleDrag = (e, data) => {
@@ -40,7 +63,9 @@ const CertificateGenerator = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">Certificate Generator</h1>
+        <h1 className="text-4xl font-bold text-gray-800 mb-8">
+          Certificate Generator
+        </h1>
 
         <Dropzone onDrop={onDrop} accept="image/*">
           {({ getRootProps, getInputProps }) => (
@@ -49,7 +74,9 @@ const CertificateGenerator = () => {
               className="border-2 border-dashed border-blue-500 bg-blue-50 p-6 rounded-lg mb-8 cursor-pointer hover:bg-blue-100 transition duration-200"
             >
               <input {...getInputProps()} />
-              <p className="text-blue-600">Drag & Drop your template or click to select</p>
+              <p className="text-blue-600">
+                Drag & Drop your template or click to select
+              </p>
             </div>
           )}
         </Dropzone>
@@ -83,17 +110,25 @@ const CertificateGenerator = () => {
         </label>
 
         <button
-          onClick={generateCertificate}
+          onClick={previewCertificate}
           className="w-full bg-blue-500 text-white p-3 rounded-lg text-xl hover:bg-blue-600 transition duration-200"
         >
-          Generate Certificate
+          Preview Certificate
         </button>
+        {preview && (
+          <button
+            onClick={generateCertificate}
+            className="w-full bg-blue-500 text-white p-3 rounded-lg text-xl hover:bg-blue-600 transition duration-200"
+          >
+            Generate Certificate
+          </button>
+        )}
 
         {template && (
           <div
             id="certificate-template"
             className="relative mt-10 border rounded-lg overflow-hidden"
-            style={{ height: '400px' }}
+            style={{ height: "400px" }}
           >
             <img
               src={template}
@@ -109,6 +144,7 @@ const CertificateGenerator = () => {
               >
                 <div
                   className="absolute w-full text-center cursor-move"
+                  id="name"
                   style={{ fontSize: `${fontSize}px`, color: textColor }}
                 >
                   {name}
@@ -117,6 +153,8 @@ const CertificateGenerator = () => {
             )}
           </div>
         )}
+
+        <div id="generatedCerts"></div>
       </div>
     </div>
   );
