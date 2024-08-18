@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#certificate-template {
+    position: relative;
+    width: 100%;
+  }
+  
+  #certificate-template img {
+    width: 100%;
+    height: auto;
+  }
+  
+  #certificate-template div {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+  }
+  
