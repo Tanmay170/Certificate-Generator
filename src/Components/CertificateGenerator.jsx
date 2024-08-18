@@ -57,7 +57,7 @@ const CertificateGenerator = () => {
   };
 
   const handleDrag = (e, data) => {
-    setYPosition(data.y); // Capture the Y-axis movement
+    setYPosition(data.y);
   };
 
   return (
