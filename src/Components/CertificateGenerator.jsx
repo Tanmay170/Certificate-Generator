@@ -5,11 +5,11 @@ import Dropzone from 'react-dropzone';
 import Draggable from 'react-draggable';
 
 const CertificateGenerator = () => {
-  const [name, setName] = useState('John Doe'); // Default name
+  const [name, setName] = useState('John Doe');
   const [template, setTemplate] = useState(null);
-  const [fontSize, setFontSize] = useState(40); // Default font size
-  const [yPosition, setYPosition] = useState(0); // Y-axis position for the draggable text
-  const [textColor, setTextColor] = useState('#000000'); // Default text color (black)
+  const [fontSize, setFontSize] = useState(40);
+  const [yPosition, setYPosition] = useState(0);
+  const [textColor, setTextColor] = useState('#000000');
 
   const onDrop = (acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -28,13 +28,13 @@ const CertificateGenerator = () => {
     html2canvas(input).then((canvas) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('landscape');
-      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210); // A4 size in mm
+      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
       pdf.save(`${name}-certificate.pdf`);
     });
   };
 
   const handleDrag = (e, data) => {
-    setYPosition(data.y); // Capture the Y-axis movement
+    setYPosition(data.y);
   };
 
   return (
