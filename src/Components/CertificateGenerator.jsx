@@ -1,161 +1,132 @@
-import html2canvas from "html2canvas";
+import axios from "axios";
+import html2canvas from "html2canvas-pro";
+import JSZip from "jszip";
 import { jsPDF } from "jspdf";
-import React, { useState } from "react";
-import Draggable from "react-draggable";
 import Dropzone from "react-dropzone";
+import Draggable from "react-draggable";
+import { useState } from "react";
+import Papa from "papaparse";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 
 const CertificateGenerator = () => {
-  const [name, setName] = useState("John Doe"); // Default name
   const [template, setTemplate] = useState(null);
-  const [fontSize, setFontSize] = useState(40); // Default font size
-  const [yPosition, setYPosition] = useState(0); // Y-axis position for the draggable text
-  const [textColor, setTextColor] = useState("#000000"); // Default text color (black)
+  const [fontSize, setFontSize] = useState(40);
+  const [textColor, setTextColor] = useState("#000000");
+  const [textAlign, setTextAlign] = useState("center");
+  const [fontWeight, setFontWeight] = useState("bold");
+  const [fontStyle, setFontStyle] = useState("normal");
+  const [yPosition, setYPosition] = useState(100);
+  const [csvData, setCsvData] = useState([]);
   const [preview, setPreview] = useState(false);
-
-  const onDrop = (acceptedFiles) => {
+  const [generatedImages, setGeneratedImages] = useState([]);
+  
+  const handleTemplateUpload = (acceptedFiles) => {
     const file = acceptedFiles[0];
     const reader = new FileReader();
-
-    reader.onload = () => {
-      setTemplate(reader.result);
-    };
-
     reader.readAsDataURL(file);
+    reader.onload = () => setTemplate(reader.result);
   };
 
-  const previewCertificate = async () => {
-    const input = document.getElementById("certificate-template");
-    const genCerts = document.getElementById("generatedCerts");
-    genCerts.innerHTML = "";
-
-    const names = [
-      "Nabh Patodi",
-      "Tanmay Bansal",
-      "Atharva Kekare",
-      "Sukh Singh Oberoi",
-    ];
-    names.forEach((nameArr) => {
-      let cert = input.cloneNode(true);
-      cert.querySelector("#name").innerHTML = nameArr;
-      console.log(cert.querySelector("#name").innerHTML);
-      genCerts.innerHTML += cert.outerHTML;
-    });
-    setPreview(true);
+  const handleCSVUpload = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const result = Papa.parse(text, { header: true });
+      setCsvData(result.data);
+    };
+    reader.readAsText(file);
   };
 
-  const generateCertificate = () => {
-    const certs = document.getElementById("generatedCerts").children;
-    for (let cert of certs) {
-      const name = cert.querySelector("#name").innerHTML;
-      html2canvas(cert).then((canvas) => {
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("landscape");
-        pdf.addImage(imgData, "PNG", 0, 0, 297, 210); // A4 size in mm
-        pdf.save(`${name}-certificate.pdf`);
-      });
+  const updateTextCustomization = (property, value) => {
+    switch (property) {
+      case "fontSize":
+        setFontSize(value);
+        break;
+      case "textColor":
+        setTextColor(value);
+        break;
+      case "textAlign":
+        setTextAlign(value);
+        break;
+      case "fontWeight":
+        setFontWeight(value);
+        break;
+      case "fontStyle":
+        setFontStyle(value);
+        break;
+      default:
+        break;
     }
   };
 
-  const handleDrag = (e, data) => {
-    setYPosition(data.y);
+  const previewCertificate = () => {
+    setPreview(true);
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">
-          Certificate Generator
-        </h1>
-
-        <Dropzone onDrop={onDrop} accept="image/*">
+    <div className="w-full p-6 bg-gradient-to-r from-blue-50 to-gray-200">
+      <h1 className="text-5xl text-center font-bold mb-6">Certificate Generator</h1>
+      <div className="w-full max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+        <Dropzone onDrop={handleTemplateUpload} accept="image/*">
           {({ getRootProps, getInputProps }) => (
-            <div
-              {...getRootProps()}
-              className="border-2 border-dashed border-blue-500 bg-blue-50 p-6 rounded-lg mb-8 cursor-pointer hover:bg-blue-100 transition duration-200"
-            >
+            <div {...getRootProps()} className="border-2 border-dashed border-blue-500 p-4 text-center cursor-pointer">
               <input {...getInputProps()} />
-              <p className="text-blue-600">
-                Drag & Drop your template or click to select
-              </p>
+              <p>Upload Certificate Template</p>
             </div>
           )}
         </Dropzone>
+        <Dropzone onDrop={handleCSVUpload} accept=".csv">
+          {({ getRootProps, getInputProps }) => (
+            <div {...getRootProps()} className="border-2 border-dashed border-blue-500 p-4 text-center cursor-pointer">
+              <input {...getInputProps()} />
+              <p>Upload CSV File</p>
+            </div>
+          )}
+        </Dropzone>
+        <Button onClick={previewCertificate} className="w-full mt-4">Preview Certificate</Button>
+      </div>
 
-        <input
-          type="text"
-          placeholder="Enter recipient's name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full p-3 border rounded-lg mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {preview && template && (
+        <div className="mt-6">
+          <div className="relative inline-block">
+            <img src={template} alt="Certificate Preview" className="w-full h-auto" id="certificate-preview" />
+            <Draggable axis="y" bounds="parent">
+              <div
+                className="absolute w-full text-center"
+                style={{ fontSize: `${fontSize}px`, color: textColor, fontWeight: fontWeight, fontStyle: fontStyle, textAlign: textAlign }}
+              >
+                {csvData.length > 0 ? csvData[0]["name"] : "Sample Name"}
+              </div>
+            </Draggable>
+          </div>
+        </div>
+      )}
 
-        <label className="flex items-center justify-between text-lg mb-6">
-          Font Size:
-          <input
+      {preview && (
+        <div className="mt-4 p-4 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold">Edit Certificate Text</h2>
+          <label className="block mt-2">Font Size</label>
+          <Input
             type="number"
             value={fontSize}
-            onChange={(e) => setFontSize(parseInt(e.target.value))}
-            className="ml-4 p-2 w-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => updateTextCustomization("fontSize", parseInt(e.target.value))}
           />
-        </label>
-
-        <label className="flex items-center justify-between text-lg mb-6">
-          Text Color:
-          <input
+          <label className="mt-2 block">Text Color</label>
+          <Input
             type="color"
             value={textColor}
-            onChange={(e) => setTextColor(e.target.value)}
-            className="ml-4 p-2 w-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => updateTextCustomization("textColor", e.target.value)}
           />
-        </label>
-
-        <button
-          onClick={previewCertificate}
-          className="w-full bg-blue-500 text-white p-3 rounded-lg text-xl hover:bg-blue-600 transition duration-200"
-        >
-          Preview Certificate
-        </button>
-        {preview && (
-          <button
-            onClick={generateCertificate}
-            className="w-full bg-blue-500 text-white p-3 rounded-lg text-xl hover:bg-blue-600 transition duration-200"
-          >
-            Generate Certificate
-          </button>
-        )}
-
-        {template && (
-          <div
-            id="certificate-template"
-            className="relative mt-10 border rounded-lg overflow-hidden"
-            style={{ height: "400px" }}
-          >
-            <img
-              src={template}
-              alt="Certificate Template"
-              className="w-full h-auto"
-            />
-            {name && (
-              <Draggable
-                axis="y"
-                bounds="parent"
-                position={{ x: 0, y: yPosition }}
-                onDrag={handleDrag}
-              >
-                <div
-                  className="absolute w-full text-center cursor-move"
-                  id="name"
-                  style={{ fontSize: `${fontSize}px`, color: textColor }}
-                >
-                  {name}
-                </div>
-              </Draggable>
-            )}
-          </div>
-        )}
-
-        <div id="generatedCerts"></div>
-      </div>
+          <label className="mt-2">Font Style</label>
+          <Select onChange={(e) => updateTextCustomization("fontStyle", e.target.value)}>
+            <option value="normal">Normal</option>
+            <option value="italic">Italic</option>
+          </Select>
+        </div>
+      )}
     </div>
   );
 };
